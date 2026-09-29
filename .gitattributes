@@ -1,0 +1,7 @@
+# Normalize line endings for a project that is deployed on Linux.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.png binary
+*.ico binary
+*.jpg binary

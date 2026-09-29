@@ -1,5 +1,8 @@
 # searxng-lazy-results
 
+[![CI](https://github.com/Zcc09/searxng-lazy-results/actions/workflows/ci.yml/badge.svg)](https://github.com/Zcc09/searxng-lazy-results/actions/workflows/ci.yml)
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue.svg)](LICENSE)
+
 A [SearXNG](https://github.com/searxng/searxng) plugin that renders the results of the fast engines
 immediately and streams in the results of the slow engines while you are already reading.
 
