@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# SearXNG settings for the Docker example (examples/docker-compose.yml).
+# A real settings file: `use_default_settings: true` keeps the default engine
+# list, and the top-level `engines:` block below is merged on top of it (it
+# does not replace the defaults). It only adds two json_engine demo engines
+# pointing at the mock-engines service, so the lazy loading is visible
+# without waiting for the internet.
+
+use_default_settings: true
+
+general:
+  instance_name: "lazy-results example"
+  debug: false
+  enable_metrics: false
+
+server:
+  bind_address: "0.0.0.0"
+  port: 8080
+  secret_key: "lazy-results-example-secret-change-me"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+search:
+  formats:
+    - html
+    - json
+  safe_search: 0
+
+plugins:
+  # the plugin under demo: render fast engines immediately, stream the slow ones
+  searxng_lazy_results.plugin.SXNGPlugin:
+    active: true
+
+lazy_results:
+  # seconds the first page waits for engines; slower engines are streamed in
+  first_paint_timeout: 1.2
+  # per engine budget of the second (streaming) pass, seconds
+  stream_timeout: 8.0
+  # engines asked at the same time by the streaming endpoint
+  max_concurrent_engines: 4
+
+engines:
+  # demo engines: served by the mock-engines service (tests/mock_engines.py)
+  - name: demo-slow
+    engine: json_engine
+    categories: [general]
+    shortcut: 'ds'
+    timeout: 20.0
+    search_url: http://mock-engines:8770/mock/slow?q={query}
+    results_query: results
+    url_query: url
+    title_query: title
+    content_query: content
+    disabled: false
+    # plain http:// engine URL: SearXNG blocks it unless explicitly allowed
+    enable_http: true
+
+  - name: demo-medium
+    engine: json_engine
+    categories: [general]
+    shortcut: 'dm'
+    timeout: 20.0
+    search_url: http://mock-engines:8770/mock/medium?q={query}
+    results_query: results
+    url_query: url
+    title_query: title
+    content_query: content
+    disabled: false
+    # plain http:// engine URL: SearXNG blocks it unless explicitly allowed
+    enable_http: true

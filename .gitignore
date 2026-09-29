@@ -1,0 +1,17 @@
+# local development
+.venv/
+venv/
+env/
+uv.lock
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+
+# scratch of the tests
+tests/.work/
+*.log

@@ -1,0 +1,93 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Client styles of the searxng-lazy-results plugin.
+ *
+ * The styles are theme agnostic: they only use `currentColor` and opacity, so
+ * light and dark themes of SearXNG both work without any configuration.
+ */
+
+.lazy-results-hidden {
+  display: none !important;
+}
+
+.lazy-results-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0.2rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px dashed currentColor;
+  border-radius: 0.4rem;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.lazy-results-panel-text {
+  overflow-wrap: anywhere;
+}
+
+.lazy-results-spinner {
+  flex: 0 0 auto;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: lazy-results-spin 0.9s linear infinite;
+}
+
+.lazy-results-batch {
+  animation: lazy-results-fade-in 0.35s ease-out;
+}
+
+.lazy-results-batch-label {
+  margin: 0.6rem 0.2rem 0.1rem;
+  font-size: 0.8rem;
+  font-weight: normal;
+  opacity: 0.6;
+}
+
+.lazy-results-batch-label strong {
+  font-weight: 600;
+}
+
+.lazy-results-note {
+  margin: 0.8rem 0.2rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.lazy-results-resolved {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.lazy-results-failed {
+  opacity: 0.6;
+}
+
+@keyframes lazy-results-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lazy-results-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lazy-results-spinner {
+    animation: none;
+  }
+
+  .lazy-results-batch {
+    animation: none;
+  }
+}

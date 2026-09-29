@@ -1,0 +1,122 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# CI for the lazy-results SearXNG plugin.
+#
+# unit:        the pytest suite without the end-to-end test (the e2e test is
+#              skipped unless the SEARXNG_E2E environment variable is set)
+#              across the supported Python versions.
+# docker-e2e:  a real SearXNG container (searxng/searxng:latest) with the
+#              repository mounted read-only at /src so the plugin is
+#              importable, served by the stdlib mock engines from
+#              tests/mock_engines.py in a sibling container, exercised by
+#              tests/run_e2e.py from the runner.
+# lint:        ruff over the package and the tests, no config file.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: unit (python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: pip install -e .[dev]
+      - name: Unit tests
+        run: python -m pytest tests -q -k "not e2e"
+
+  docker-e2e:
+    name: docker e2e
+    runs-on: ubuntu-latest
+    needs: unit
+    env:
+      MOCK_NAME: lazy-e2e-mock
+      SEARXNG_NAME: lazy-e2e-searxng
+      NET: lazy-e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install runner-side test dependencies
+        run: pip install requests
+      - name: Generate container settings
+        run: |
+          set -euo pipefail
+          # The e2e settings (tests/settings.test.yml) bind to 127.0.0.1 and
+          # point the mock engines at 127.0.0.1:8770. Inside the SearXNG
+          # container the mock engines live in a sibling container (addressed
+          # by container name on the shared network) and the web server must
+          # listen on all interfaces so the runner can reach it. The result
+          # is written to the runner temp dir so the workflow does not depend
+          # on any file owned outside the repository.
+          mkdir -p "$RUNNER_TEMP/e2e"
+          sed -e 's|http://127\.0\.0\.1:8770|http://lazy-e2e-mock:8770|g' \
+              -e 's|bind_address: "127\.0\.0\.1"|bind_address: "0.0.0.0"|' \
+              tests/settings.test.yml > "$RUNNER_TEMP/e2e/settings.yml"
+      - name: Start mock engines
+        run: |
+          set -euo pipefail
+          docker network create "$NET"
+          docker run -d --name "$MOCK_NAME" --network "$NET" \
+            -v "$GITHUB_WORKSPACE:/src:ro" \
+            python:3.12-alpine \
+            python /src/tests/mock_engines.py --host 0.0.0.0 --port 8770
+      - name: Start SearXNG with the plugin
+        run: |
+          set -euo pipefail
+          docker run -d --name "$SEARXNG_NAME" --network "$NET" \
+            -p 8888:8888 \
+            -v "$GITHUB_WORKSPACE:/src:ro" \
+            -v "$RUNNER_TEMP/e2e/settings.yml:/etc/searxng/settings.yml:ro" \
+            -e SEARXNG_SETTINGS_PATH=/etc/searxng/settings.yml \
+            -e SEARXNG_PORT=8888 \
+            -e SEARXNG_SECRET=lazy-results-ci-secret \
+            -e PYTHONPATH=/src \
+            searxng/searxng:latest
+      - name: Wait for SearXNG to come up
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 60); do
+            if curl -fsS http://localhost:8888/healthz >/dev/null 2>&1; then
+              echo "SearXNG is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs "$SEARXNG_NAME"
+          exit 1
+      - name: Run the e2e suite
+        env:
+          SEARXNG_E2E: "1"
+        run: python tests/run_e2e.py --base-url http://localhost:8888
+      - name: Teardown containers
+        if: always()
+        run: |
+          docker rm -f "$SEARXNG_NAME" "$MOCK_NAME" || true
+          docker network remove "$NET" || true
+
+  lint:
+    name: lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: python -m pip install ruff
+      - name: ruff check
+        run: ruff check searxng_lazy_results tests --select E,F,W --line-length 120

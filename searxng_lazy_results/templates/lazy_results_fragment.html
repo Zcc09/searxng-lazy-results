@@ -1,0 +1,15 @@
+{# SPDX-License-Identifier: AGPL-3.0-or-later #}
+{#- Renders streamed results with the templates of the current theme.
+
+    This is the result loop of ``simple/results.html`` -- same includes, same
+    grouping -- so a streamed result looks exactly like a result of the first
+    page.  ``index`` continues the numbering of the first page so that the DOM
+    ids of media results stay unique.
+-#}
+{% from 'simple/icons.html' import icon, icon_big, icon_small %}
+{% for result in lazy_results %}
+    {% if result.open_group and not lazy_only_template %}<div class="template_group_{{ result['template']|replace('.html', '') }}">{% endif %}
+    {% set index = lazy_first_index + loop.index0 %}
+    {% include get_result_template(theme, result['template']) %}
+    {% if result.close_group and not lazy_only_template %}</div>{% endif %}
+{% endfor %}

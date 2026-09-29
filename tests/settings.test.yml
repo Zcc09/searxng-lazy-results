@@ -1,0 +1,116 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# SearXNG settings used by tests/run_e2e.py: nothing but the mock engines, so
+# the behaviour of the plugin is deterministic and no upstream engine is asked.
+#
+#   SEARXNG_SETTINGS_PATH=<this file> python -m searx.webapp
+#
+use_default_settings:
+  engines:
+    keep_only:
+      - mockfast
+      - mockmedium
+      - mockslow
+
+general:
+  debug: false
+  instance_name: "lazy-results test instance"
+  enable_metrics: false
+
+server:
+  bind_address: "127.0.0.1"
+  port: 8888
+  secret_key: "lazy-results-test-secret"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+
+search:
+  formats:
+    - html
+    - json
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+
+ui:
+  default_theme: simple
+  default_locale: en
+  center_alignment: false
+
+outgoing:
+  request_timeout: 10.0
+  max_request_timeout: 10.0
+
+plugins:
+  # the plugin under test
+  searxng_lazy_results.plugin.SXNGPlugin:
+    active: true
+  # keep the built-in noise away from the test instance
+  searx.plugins.calculator.SXNGPlugin:
+    active: false
+  searx.plugins.hash_plugin.SXNGPlugin:
+    active: false
+  searx.plugins.self_info.SXNGPlugin:
+    active: false
+  searx.plugins.unit_converter.SXNGPlugin:
+    active: false
+  searx.plugins.ahmia_filter.SXNGPlugin:
+    active: false
+  searx.plugins.hostnames.SXNGPlugin:
+    active: false
+  searx.plugins.time_zone.SXNGPlugin:
+    active: false
+  searx.plugins.oa_doi_rewrite.SXNGPlugin:
+    active: false
+  searx.plugins.tor_check.SXNGPlugin:
+    active: false
+  searx.plugins.tracker_url_remover.SXNGPlugin:
+    active: false
+  searx.plugins.infinite_scroll.SXNGPlugin:
+    active: false
+
+lazy_results:
+  first_paint_timeout: 1.0
+  stream_timeout: 6.0
+  max_concurrent_engines: 4
+
+engines:
+  - name: mockfast
+    engine: json_engine
+    categories: [general]
+    shortcut: mf
+    disabled: false
+    enable_http: true
+    timeout: 10.0
+    search_url: http://127.0.0.1:8770/mock/fast?q={query}
+    results_query: results
+    url_query: url
+    title_query: title
+    content_query: content
+
+  - name: mockmedium
+    engine: json_engine
+    categories: [general]
+    shortcut: mm
+    disabled: false
+    enable_http: true
+    timeout: 10.0
+    search_url: http://127.0.0.1:8770/mock/medium?q={query}
+    results_query: results
+    url_query: url
+    title_query: title
+    content_query: content
+
+  - name: mockslow
+    engine: json_engine
+    categories: [general]
+    shortcut: ms
+    disabled: false
+    enable_http: true
+    timeout: 10.0
+    search_url: http://127.0.0.1:8770/mock/slow?q={query}
+    results_query: results
+    url_query: url
+    title_query: title
+    content_query: content

@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Runnable demo of the searxng-lazy-results plugin.
+#
+#   docker compose up
+#
+# and open http://localhost:8888/search?q=demo
+#
+# The `searxng` service runs the real SearXNG image with the plugin imported
+# from the repository (read-only bind mount on the PYTHONPATH); the
+# `mock-engines` service serves the latency-controlled mock backends that the
+# two demo engines (demo-slow, demo-medium) in settings.yml point at, so the
+# lazy loading is visible without waiting for the internet.
+
+name: searxng-lazy-results
+
+services:
+  searxng:
+    image: searxng/searxng:latest
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8888"
+      SEARXNG_SECRET: "lazy-results-example-secret-change-me"
+      SEARXNG_SETTINGS_PATH: /etc/searxng/settings.yml
+      SEARXNG_PORT: "8080"
+      # make the plugin importable from the read-only repo mount
+      PYTHONPATH: /lazy-results-src
+    volumes:
+      - ./settings.yml:/etc/searxng/settings.yml:ro
+      - ../:/lazy-results-src:ro
+    ports:
+      - "8888:8080"
+    networks:
+      - lazy
+    restart: unless-stopped
+
+  mock-engines:
+    image: python:3.12-alpine
+    # stdlib-only script: no pip installs needed
+    command: python /mock_engines.py --port 8770 --delay fast=0.2 --delay medium=1.2 --delay slow=4.0
+    volumes:
+      - ../tests/mock_engines.py:/mock_engines.py:ro
+    networks:
+      - lazy
+    restart: unless-stopped
+
+networks:
+  # user defined network so http://mock-engines:8770/... resolves inside the stack
+  lazy:
+    driver: bridge

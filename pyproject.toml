@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "searxng-lazy-results"
+version = "1.0.0"
+description = "SearXNG plugin: render results from fast engines immediately, stream in the slow ones"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "Zcc09" }]
+keywords = ["searxng", "searx", "plugin", "lazy-loading", "server-sent-events", "metasearch"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: Flask",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+]
+# SearXNG (and with it flask, jinja2, flask-babel, ...) is the host application
+# of this plugin and is already installed -- nothing is pulled in here.
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Zcc09/searxng-lazy-results"
+Source = "https://github.com/Zcc09/searxng-lazy-results"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "requests>=2.31"]
+
+[tool.setuptools]
+packages = ["searxng_lazy_results"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+searxng_lazy_results = ["static/*.js", "static/*.css", "templates/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
