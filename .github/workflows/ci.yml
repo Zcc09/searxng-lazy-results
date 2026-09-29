@@ -77,15 +77,21 @@ jobs:
       - name: Start SearXNG with the plugin
         run: |
           set -euo pipefail
+          # The settings travel as base64 in an environment variable and are
+          # written by the container itself: a read-only bind mount of
+          # /etc/searxng/settings.yml makes the image's entrypoint fail when it
+          # tries to adjust the file.
           docker run -d --name "$SEARXNG_NAME" --network "$NET" \
             -p 8888:8888 \
             -v "$GITHUB_WORKSPACE:/src:ro" \
-            -v "$RUNNER_TEMP/e2e/settings.yml:/etc/searxng/settings.yml:ro" \
             -e SEARXNG_SETTINGS_PATH=/etc/searxng/settings.yml \
             -e SEARXNG_PORT=8888 \
             -e SEARXNG_SECRET=lazy-results-ci-secret \
             -e PYTHONPATH=/src \
-            searxng/searxng:latest
+            -e "LAZY_SETTINGS_B64=$(base64 -w0 "$RUNNER_TEMP/e2e/settings.yml")" \
+            --entrypoint /bin/sh \
+            searxng/searxng:latest \
+            -c 'echo "$LAZY_SETTINGS_B64" | base64 -d > /etc/searxng/settings.yml && exec /usr/local/searxng/entrypoint.sh'
       - name: Wait for SearXNG to come up
         run: |
           set -euo pipefail

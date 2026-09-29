@@ -31,7 +31,9 @@ Homepage = "https://github.com/Zcc09/searxng-lazy-results"
 Source = "https://github.com/Zcc09/searxng-lazy-results"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "requests>=2.31"]
+# The plugin imports Flask/Flask-Babel at module level (they are part of the
+# SearXNG installation it runs in), so the test environment needs them too.
+dev = ["pytest>=8", "requests>=2.31", "flask>=3.1", "flask-babel>=4"]
 
 [tool.setuptools]
 packages = ["searxng_lazy_results"]

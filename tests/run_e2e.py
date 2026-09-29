@@ -173,7 +173,10 @@ def test_progressive(base: str, config: dict[str, t.Any] | None) -> None:
             check(False, f"the stream answers with 200 (got {response.status_code}: {response.text[:160]!r})")
             return
         check(True, "the stream answers with 200")
-        check(response.headers.get("content-type", "").startswith("text/event-stream"), "the stream is text/event-stream")
+        check(
+            response.headers.get("content-type", "").startswith("text/event-stream"),
+            "the stream is text/event-stream",
+        )
         check(response.headers.get("x-accel-buffering") == "no", "the stream asks proxies not to buffer")
 
         arrivals: dict[str, float] = {}
@@ -225,7 +228,8 @@ def test_api_untouched(base: str) -> None:
     elapsed = time.time() - started
     payload = response.json()
 
-    measure(f"json search: HTTP {response.status_code} after {elapsed:.2f}s with {len(payload.get('results', []))} results")
+    results = len(payload.get("results", []))
+    measure(f"json search: HTTP {response.status_code} after {elapsed:.2f}s with {results} results")
     check(response.status_code == 200, "the json API answers with 200")
     check(elapsed >= MOCK_DELAYS["slow"] - 0.5, "the json API waited for the slow engine (no first paint)")
     urls = {str(result.get("url", "")).split("?")[0] for result in payload.get("results", [])}
@@ -266,7 +270,10 @@ def test_signature(base: str, config: dict[str, t.Any] | None) -> None:
     decoded["engines"].append(["mockfast", "general"])
     forged = base64.urlsafe_b64encode(json.dumps(decoded).encode()).rstrip(b"=").decode()
     forged_response = requests.get(f"{base}/lazy-results/stream?payload={forged}&sig={signature}", timeout=20)
-    check(forged_response.status_code == 403, f"an engine that was not signed is refused ({forged_response.status_code})")
+    check(
+        forged_response.status_code == 403,
+        f"an engine that was not signed is refused ({forged_response.status_code})",
+    )
 
     unsigned = requests.get(f"{base}/lazy-results/stream?payload={payload}", timeout=20)
     check(unsigned.status_code == 403, f"a missing signature is refused ({unsigned.status_code})")

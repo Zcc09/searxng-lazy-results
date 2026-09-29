@@ -65,7 +65,7 @@ def test_encoding_is_url_safe_and_compact():
 
 def test_verify_rejects_tampered_payload():
     payload = {"v": 1, "q": "lazy"}
-    raw, signature = signing.encode(payload), signing.sign(payload, SECRET)
+    signature = signing.sign(payload, SECRET)
     tampered = signing.encode({"v": 1, "q": "evil"})
 
     with pytest.raises(ValueError) as error:
